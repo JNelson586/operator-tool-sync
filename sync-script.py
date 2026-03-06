@@ -16,6 +16,8 @@ LOCAL_REPO_PATH = Path("/tmp/internal_tools_repo")   # where the repo will live 
 LOCAL_TOOLS_PATH = Path("/home/$USER/tools_local".replace("$USER", os.getenv("USER", "user")))
 REPO_TOOLS_SUBDIR = Path("tools")  # folder inside the repo containing tools
 
+ALLOWED_EXT = [".py", ".sh", ".yaml", ".yml", ".json"]  # allowed tool file types
+
 GITLAB_TOKEN = os.getenv("GITLAB_TOKEN")
 GITLAB_REPO_URL = os.getenv("GITLAB_REPO_URL")
 
@@ -106,10 +108,15 @@ def upload_new_tools_to_repo():
     for item in LOCAL_TOOLS_PATH.iterdir():
         dest = repo_tools_dir / item.name
 
-        if item.is_file():
-            shutil.copy2(item, dest)
-            print(f"[+] Uploaded file: {item.name}")
-            changed = True
+if item.is_file():
+    if item.suffix not in ALLOWED_EXT:
+        print(f"[-] Skipping unsupported file type: {item.name}")
+        continue
+
+    shutil.copy2(item, dest)
+    print(f"[+] Uploaded file: {item.name}")
+    changed = True
+    
         elif item.is_dir():
             if dest.exists():
                 shutil.rmtree(dest)
