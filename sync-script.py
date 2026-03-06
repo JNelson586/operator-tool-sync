@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
 
-export GITLAB_TOKEN="your_gitlab_token"
-export GITLAB_REPO_URL="https://gitlab.com/your-group/your-repo.git"
-
 import os
 import shutil
 import subprocess
@@ -12,11 +9,11 @@ from pathlib import Path
 # =========================
 # CONFIG
 # =========================
-LOCAL_REPO_PATH = Path("/tmp/internal_tools_repo")   # where the repo will live locally
-LOCAL_TOOLS_PATH = Path("/home/$USER/tools_local".replace("$USER", os.getenv("USER", "user")))
-REPO_TOOLS_SUBDIR = Path("tools")  # folder inside the repo containing tools
+LOCAL_REPO_PATH = Path("/tmp/internal_tools_repo")
+LOCAL_TOOLS_PATH = Path.home() / "tools_local"
+REPO_TOOLS_SUBDIR = Path("tools")
 
-ALLOWED_EXT = [".py", ".sh", ".yaml", ".yml", ".json"]  # allowed tool file types
+ALLOWED_EXT = [".py", ".sh", ".yaml", ".yml", ".json"]
 
 GITLAB_TOKEN = os.getenv("GITLAB_TOKEN")
 GITLAB_REPO_URL = os.getenv("GITLAB_REPO_URL")
@@ -50,15 +47,10 @@ def ensure_env():
         sys.exit(1)
 
 def build_auth_repo_url():
-    # Converts:
-    # https://gitlab.com/group/repo.git
-    # into:
-    # https://oauth2:TOKEN@gitlab.com/group/repo.git
     if GITLAB_REPO_URL.startswith("https://"):
         return GITLAB_REPO_URL.replace("https://", f"https://oauth2:{GITLAB_TOKEN}@")
-    else:
-        print("[!] Only HTTPS GitLab repo URLs are supported in this script.")
-        sys.exit(1)
+    print("[!] Only HTTPS GitLab repo URLs are supported in this script.")
+    sys.exit(1)
 
 def clone_or_pull_repo():
     auth_repo_url = build_auth_repo_url()
@@ -75,16 +67,13 @@ def ensure_directories():
     (LOCAL_REPO_PATH / REPO_TOOLS_SUBDIR).mkdir(parents=True, exist_ok=True)
 
 def download_tools_from_repo():
-    """
-    Copies tools from repo/tools -> local tools directory
-    """
     repo_tools_dir = LOCAL_REPO_PATH / REPO_TOOLS_SUBDIR
 
     if not repo_tools_dir.exists():
         print(f"[!] Repo tools directory does not exist: {repo_tools_dir}")
         return
 
-    print(f"[*] Downloading tools from repo to local system...")
+    print("[*] Downloading tools from repo to local system...")
     for item in repo_tools_dir.iterdir():
         dest = LOCAL_TOOLS_PATH / item.name
 
@@ -98,25 +87,22 @@ def download_tools_from_repo():
             print(f"[+] Copied directory: {item.name}")
 
 def upload_new_tools_to_repo():
-    """
-    Copies tools from local tools directory -> repo/tools
-    """
     repo_tools_dir = LOCAL_REPO_PATH / REPO_TOOLS_SUBDIR
     changed = False
 
-    print(f"[*] Uploading local tools into repo...")
+    print("[*] Uploading local tools into repo...")
     for item in LOCAL_TOOLS_PATH.iterdir():
         dest = repo_tools_dir / item.name
 
-if item.is_file():
-    if item.suffix not in ALLOWED_EXT:
-        print(f"[-] Skipping unsupported file type: {item.name}")
-        continue
+        if item.is_file():
+            if item.suffix not in ALLOWED_EXT:
+                print(f"[-] Skipping unsupported file type: {item.name}")
+                continue
 
-    shutil.copy2(item, dest)
-    print(f"[+] Uploaded file: {item.name}")
-    changed = True
-    
+            shutil.copy2(item, dest)
+            print(f"[+] Uploaded file: {item.name}")
+            changed = True
+
         elif item.is_dir():
             if dest.exists():
                 shutil.rmtree(dest)
@@ -145,8 +131,8 @@ def commit_and_push():
 
 def main():
     ensure_env()
-    ensure_directories()
     clone_or_pull_repo()
+    ensure_directories()
     download_tools_from_repo()
     changed = upload_new_tools_to_repo()
 
