@@ -9,7 +9,7 @@ from pathlib import Path
 # =========================
 # CONFIG
 # =========================
-LOCAL_REPO_PATH = Path("/tmp/internal_tools_repo")
+LOCAL_REPO_PATH = Path.home() / "internal_tools_repo"
 LOCAL_TOOLS_PATH = Path.home() / "tools_local"
 REPO_TOOLS_SUBDIR = Path("tools")
 
