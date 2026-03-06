@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+# export GITLAB_TOKEN="your_gitlab_token"
+# export GITLAB_REPO_URL="https://gitlab.com/your-group/your-repo.git"
+# python3 gitlab_tool_sync.py
+
 import os
 import shutil
 import subprocess
